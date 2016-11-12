@@ -1,0 +1,8 @@
+cmake_minimum_required (VERSION 2.6)
+project (native_lua)
+MESSAGE(STATUS ${PROJECT_SRC_DIR})
+file(GLOB LUA_LIST "lua/*.c")
+file(GLOB SOURCE_LIST "src/*.cpp")
+add_executable(native_lua ${LUA_LIST} ${SOURCE_LIST})
+include_directories("lua/")
+include_directories("include/")
