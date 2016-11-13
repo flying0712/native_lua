@@ -1,17 +1,43 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <lua.hpp>
 #include "helper.hpp"
+#include <ctime>
+#include <vector>
 
-
-void error (lua_State *L, const char *fmt, ...) {
+void handle_error(lua_State *L, const char *fmt, ...) {
     va_list argp;
     va_start(argp, fmt);
-    vfprintf(stderr, argp);
+    vfprintf(stderr, fmt, argp);
     va_end(argp);
     lua_close(L);
-    exit(EXIT_FAILURE);
+    exit(-1);
 }
+
+void debug_log(const char *fmt, ...)
+{
+    std::time_t t = std::time(nullptr);
+    char time_buf[100];
+    std::strftime(time_buf, sizeof(time_buf), "%D %T", std::gmtime(&t));
+    
+    va_list args1;
+    va_start(args1, fmt);
+    va_list args2;
+    va_copy(args2, args1);
+
+    //trick to get the size of args1 with fmt
+    int len = 1+vsnprintf(NULL, 0, fmt, args1);
+    std::vector<char> buf(len);
+    va_end(args1);
+
+    //fmt args2 to buf
+    vsnprintf(buf.data(), buf.size(), fmt, args2);
+    va_end(args2);
+
+    printf("%s [debug]: %s\n", time_buf, buf.data());
+}
+
 void test_interact(){
     char buff[256];
     int error;
@@ -49,25 +75,49 @@ void test_interact(){
 * Lua代码的stack操作遵循严格LIFO(后进先出)，当你调用Lua时，它只会改变栈顶的部分。
 */
 void test_stack_api(){
-    lua_State*L = luaL_newstate();
+    lua_State* L = luaL_newstate();
     lua_pushboolean(L,1);
     lua_pushnumber(L,10);
     lua_pushnil(L);
-    lua_pushstring(L,"hello");
+    
+    //lua会保存string copy
+    char *hello = new char[6];
+    strcpy(hello,"hello");
+    lua_pushstring(L,hello);
+    delete[] hello;
     Helper::stackDump(L);// (底-4)true,10,nil,'hello'(顶-1)
+
+    /*将栈底的true复制到顶部*/
     lua_pushvalue(L,-4);
-    Helper::stackDump(L);//(1,-5)true,10,nil,'hello',true(5,-1)
+    Helper::stackDump(L);//(1)true,10,(3)nil,'hello',true(5,-1)
+
+    /*栈顶元素(true)移动到底部第三个元素(nil)，nil会被删掉*/
     lua_replace(L,3);
     Helper::stackDump(L);// true,10,true,'hello'
+
     lua_settop(L,6);
     Helper::stackDump(L);//true,10,true,'hello'(-3),nil,nil(-1)
     lua_remove(L,-3); //true,10,true,nil,nil
+
+    /* set top to -5 */
     lua_settop(L,-5); //true
+
+    lua_pushstring(L,"elements");
+    //query stack elements
+    /* s不可以被修改, l是s的长度 */
+    const char* s = lua_tostring(L, -1);
+    size_t l = lua_strlen(L, -1);
+    printf("query top = %s len = %ld\n",s,l);
+
     lua_close(L);
+
 }
+
 int main (void)
 {
-    //test_interact();
+    // test_interact();
     test_stack_api();
+    // print_message("%s=%d\n","key",100);
+    // debug_log("Logging, %d %d %d", 1, 2, 3);
     return 0;
 }

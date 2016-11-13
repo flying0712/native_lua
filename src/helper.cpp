@@ -6,7 +6,7 @@
 void Helper::stackDump(lua_State* L){    
     int i;
     int top = lua_gettop(L);
-    for(i=1;i<=top;i++){
+    for(i=1; i<=top; i++){
         int t = lua_type(L,i);
         switch(t){
             case LUA_TSTRING:{
