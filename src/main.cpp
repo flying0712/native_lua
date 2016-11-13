@@ -6,14 +6,7 @@
 #include <ctime>
 #include <vector>
 
-void handle_error(lua_State *L, const char *fmt, ...) {
-    va_list argp;
-    va_start(argp, fmt);
-    vfprintf(stderr, fmt, argp);
-    va_end(argp);
-    lua_close(L);
-    exit(-1);
-}
+
 
 void debug_log(const char *fmt, ...)
 {
@@ -115,31 +108,41 @@ void test_stack_api(){
 
 /* read width and height from a lua file */
 void test_window_size(){
-    const char *filename = "scripts/window_size.lua";
-    lua_State *L = lua_open();
-    luaL_openlibs(L);
+    lua_State* L = Helper::loadLua("scripts/window_display.lua");
 
-    if (luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0)){
-        handle_error(L, "cannot run configuration file: %s", lua_tostring(L, -1));
-    }
-    
+    /*取出lua的值，并压人stack*/
     lua_getglobal(L, "width");
     lua_getglobal(L, "height");
 
     if (!lua_isnumber(L, -2)){
-        handle_error(L, "`width' should be a number\n");
+        Helper::handleError(L, "`width' should be a number\n");
     }
 
     if (!lua_isnumber(L, -1)){
-        handle_error(L, "`height' should be a number\n");
+        Helper::handleError(L, "`height' should be a number\n");
     }
-
-    int width = (int)lua_tonumber(L, -2);
+    /* 使用栈顶的方式索引，无论堆栈之前的是否是空的，代码都有效
+     * 尽量使用栈顶来索引
+     */
+    int width = (int)lua_tonumber(L, -2); //仅仅读,不影响堆栈
     int height = (int)lua_tonumber(L, -1);
-
     lua_close(L);
 
     debug_log("height = %d width = %d",width,height);
+}
+
+void test_table() {
+    // #define MAX_COLOR 255
+    // lua_State* L = Helper::loadLua("scripts/window_display.lua");
+    // lua_getglobal(L, "background");
+
+    // lua_pushstring(L, key);
+    // lua_gettable(L, -2); /* get background[key] */ 
+    // result = (int)(lua_tonumber(L, -1) * MAX_COLOR);
+
+    // lua_pop(L, 1); /* remove number */
+
+    // return result;
 }
 
 int main (void)
@@ -147,6 +150,6 @@ int main (void)
     // test_interact();
     // test_stack_api();
     // debug_log("Logging, %d %d %d", 1, 2, 3);
-    test_window_size();
+    // test_window_size();
     return 0;
 }
