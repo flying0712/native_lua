@@ -131,19 +131,35 @@ void test_window_size(){
     debug_log("height = %d width = %d",width,height);
 }
 
+/* read and write table */
 void test_table() {
     #define MAX_COLOR 255
     lua_State* L = Helper::loadLua("scripts/window_display.lua");
+    /* push background to top */
     lua_getglobal(L, "background");
+
     if (!lua_istable(L, -1))
         Helper::handleError(L, "`background' is not a valid color table");
 
-    lua_pushstring(L, "r");/* push key 'r'*/
-    lua_gettable(L, -2); /* get background.r */ 
-
-    int r = (int)(lua_tonumber(L, -1) * MAX_COLOR); /* get r */
+    lua_pushstring(L, "r");     /* push key 'r'*/
+    lua_gettable(L, -2);        /* get background.r and push to top */ 
+    int r = (int)(lua_tonumber(L, -1) * MAX_COLOR); /* read r */
     lua_pop(L, 1); /* remove r from top */
+    
     debug_log("background.r = %d",r);
+
+    /*set r to 0.1 */
+    lua_pushstring(L, "r");     /* push key 'r' */
+    lua_pushnumber(L,0.1);      /* push value '0.1' */
+    lua_settable(L, -3);        /* set background.r = 0.1 */
+
+    /* read again */
+    lua_pushstring(L, "r");
+    lua_gettable(L, -2);
+    r = (int)(lua_tonumber(L, -1) * MAX_COLOR);
+    lua_pop(L, 1);
+    debug_log("background.r = %d",r);
+    
 }
 
 int main (void)
