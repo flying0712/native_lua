@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <lua.hpp>
 #include "helper.hpp"
+#include <math.h>
 #include <ctime>
 #include <vector>
 
@@ -162,12 +163,95 @@ void test_table() {
     
 }
 
+/* call a function `f' defined in Lua */
+void test_call_function() {
+    double x = 2;
+    double y = 10;
+
+    lua_State* L = Helper::loadLua("scripts/call_me.lua");
+    /* push functions and arguments */ 
+    lua_getglobal(L,"f"); /*function to be called*/
+    lua_pushnumber(L, x); /* push 1st argument */ 
+    lua_pushnumber(L, y); /* push 2nd argument */
+    debug_log("before call: size = %d",lua_gettop(L));
+
+    /* do the call (2 arguments, 1 result) */
+    if (lua_pcall(L, 2, 1, 0) != 0)
+        Helper::handleError(L, "error running function `f': %s", lua_tostring(L, -1));
+    
+    debug_log("after call size = %d",lua_gettop(L));
+
+    /* retrieve result */
+    if (!lua_isnumber(L, -1))
+        Helper::handleError(L, "function `f' must return a number");
+    double z = lua_tonumber(L, -1);
+    lua_pop(L, 1); /* pop returned value */ 
+
+    debug_log("z = %f",z);
+}
+
+void test_common_call(){
+    lua_State* L = Helper::loadLua("scripts/call_me.lua");
+    int rz;
+    Helper::call_lua_func(L, "f", "ii>i", 11, 31, &rz);
+    debug_log("rz = %d",rz);
+
+    lua_close(L);
+}
+
+
+/*调用C函数*/
+
+/*
+typedef int (*lua_CFunction) (lua_State *L);
+在Lua中注册的函数都必须是lua_CFunction类型
+函数在将返回值入栈之前不需要清理栈，函数返回之后，lua自动清除栈中返回结果以下的所有内容
+*/
+static int l_sin (lua_State *L) {
+    debug_log("l_sin>>top = %d",lua_gettop(L));
+    // double d = lua_tonumber(L, 1); /* get argument */
+    double d = luaL_checknumber(L, 1); /* get argument with check */
+    lua_pushnumber(L, sin(d)); /* push result */ 
+    debug_log("l_sin>>top = %d",lua_gettop(L));
+    return 1; /* number of results */
+}
+
+void test_lua_call_sin(){
+    lua_State *L = lua_open();
+    luaL_openlibs(L);
+
+    /* push l_sin to top, stack == 1 */
+    lua_pushcfunction(L, l_sin);
+    debug_log("top = %d",lua_gettop(L));
+
+    /* set top value to 'mysin', stack == 0 */
+    lua_setglobal(L, "mysin");
+    debug_log("top = %d",lua_gettop(L));
+
+
+    /* will be clear */
+    lua_pushstring(L,"test");
+    debug_log("test-> top = %d",lua_gettop(L));
+
+    /*inovke mysin in a lua script*/
+    const char* filename = "scripts/call_c_fun.lua";
+    if (luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0)){
+        Helper::handleError(L, "cannot run file: %s", lua_tostring(L, -1));
+    }
+
+    /* lua auto clear func call stack */
+    debug_log("top = %d",lua_gettop(L));
+}
+
 int main (void)
 {
     // test_interact();
     // test_stack_api();
     // debug_log("Logging, %d %d %d", 1, 2, 3);
     // test_window_size();
-    test_table();
+    // test_table();
+    // test_call_function();
+    // test_common_call();
+    test_lua_call_sin();
     return 0;
 }

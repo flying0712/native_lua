@@ -9,7 +9,7 @@ public:
     static void stackDump(lua_State* L);
     static void handleError(lua_State *L, const char *fmt, ...);
     static lua_State* loadLua(const char* filename);
-    
+    static void call_lua_func(lua_State* L,const char *func, const char *sig, ...);
 };
 
 #endif
