@@ -108,7 +108,7 @@ void test_stack_api(){
 
 /* read width and height from a lua file */
 void test_window_size(){
-    lua_State* L = Helper::loadLua("scripts/window_display.lua");
+    lua_State* L = Helper::loadLua("scripts/window_size.lua");
 
     /*取出lua的值，并压人stack*/
     lua_getglobal(L, "width");
@@ -132,17 +132,18 @@ void test_window_size(){
 }
 
 void test_table() {
-    // #define MAX_COLOR 255
-    // lua_State* L = Helper::loadLua("scripts/window_display.lua");
-    // lua_getglobal(L, "background");
+    #define MAX_COLOR 255
+    lua_State* L = Helper::loadLua("scripts/window_display.lua");
+    lua_getglobal(L, "background");
+    if (!lua_istable(L, -1))
+        Helper::handleError(L, "`background' is not a valid color table");
 
-    // lua_pushstring(L, key);
-    // lua_gettable(L, -2); /* get background[key] */ 
-    // result = (int)(lua_tonumber(L, -1) * MAX_COLOR);
+    lua_pushstring(L, "r");/* push key 'r'*/
+    lua_gettable(L, -2); /* get background.r */ 
 
-    // lua_pop(L, 1); /* remove number */
-
-    // return result;
+    int r = (int)(lua_tonumber(L, -1) * MAX_COLOR); /* get r */
+    lua_pop(L, 1); /* remove r from top */
+    debug_log("background.r = %d",r);
 }
 
 int main (void)
@@ -151,5 +152,6 @@ int main (void)
     // test_stack_api();
     // debug_log("Logging, %d %d %d", 1, 2, 3);
     // test_window_size();
+    test_table();
     return 0;
 }
