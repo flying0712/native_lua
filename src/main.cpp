@@ -113,11 +113,40 @@ void test_stack_api(){
 
 }
 
+/* read width and height from a lua file */
+void test_window_size(){
+    const char *filename = "scripts/window_size.lua";
+    lua_State *L = lua_open();
+    luaL_openlibs(L);
+
+    if (luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0)){
+        handle_error(L, "cannot run configuration file: %s", lua_tostring(L, -1));
+    }
+    
+    lua_getglobal(L, "width");
+    lua_getglobal(L, "height");
+
+    if (!lua_isnumber(L, -2)){
+        handle_error(L, "`width' should be a number\n");
+    }
+
+    if (!lua_isnumber(L, -1)){
+        handle_error(L, "`height' should be a number\n");
+    }
+
+    int width = (int)lua_tonumber(L, -2);
+    int height = (int)lua_tonumber(L, -1);
+
+    lua_close(L);
+
+    debug_log("height = %d width = %d",width,height);
+}
+
 int main (void)
 {
     // test_interact();
-    test_stack_api();
-    // print_message("%s=%d\n","key",100);
+    // test_stack_api();
     // debug_log("Logging, %d %d %d", 1, 2, 3);
+    test_window_size();
     return 0;
 }
