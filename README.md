@@ -1,7 +1,7 @@
 # native_lua
 
-Run project
-modify main.cpp for test
+First, install cmake.
+Then, follow:
 ```
     mkdir build
     cd build
@@ -10,7 +10,7 @@ modify main.cpp for test
 ```
 
 You can do some practice to test lua c api by this project easily.
-Add some code in main.cpp and do you test by run.sh in build directory.
+Add some code in main.cpp and do test by run.sh in build directory.
 
-Sometimes, I just want a clean lua test environment for me to test some lua api feature. The first time, I use eclipse to create a project for test. Recently, I find eclipse is not easy set for c language, so I change to cmake to start a clean project and it is great for me to write test.
+Sometimes, I just want a clean lua test environment to test some lua api feature. At first, I created a project by eclipse about 2 years ago. Recently, I need test for something again but find eclipse is not easy, so I try the cmake, start a clean project.
 So enjoy yourself. 
