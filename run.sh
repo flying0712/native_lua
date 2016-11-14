@@ -1,3 +1,3 @@
 cmake ..&& make
 echo "-----------[app]------------"
-./native_lua
+./bin/native_lua
