@@ -35,7 +35,7 @@ void debug_log(const char *fmt, ...)
 void test_interact(){
     char buff[256];
     int error;
-    lua_State *L = lua_open();  /* opens Lua */
+    lua_State *L = luaL_newstate();  /* opens Lua */
 
     /* 
     luaopen_base(L);
@@ -163,14 +163,28 @@ void test_table() {
     
 }
 
-#define TOLUA_REFID_PTR_MAPPING "ref_id_ptr"
-
 void test_create_table(){
-    lua_State *L = lua_open();
+    lua_State *L = luaL_newstate();
     luaL_openlibs(L);
-    lua_pushstring(L, TOLUA_REFID_PTR_MAPPING);
+
+    /* op: my_table = {} */
+    lua_pushstring(L, "my_table");
     lua_newtable(L);
-    lua_rawset(L,1);
+    /* register 'my_table = {}' to lua pre-defined table */
+    lua_rawset(L,LUA_REGISTRYINDEX);
+
+    /* op: my_table.name = 'lua' */
+    lua_pushstring(L,"my_table");
+    lua_rawget(L,LUA_REGISTRYINDEX);
+    lua_pushstring(L,"name"); 
+    lua_pushstring(L,"lua"); /* table(-3), name, lua */
+    lua_rawset(L,-3); /* table */
+
+    /* op: my_table.name */
+    lua_pushstring(L,"name"); /* table */
+    lua_rawget(L,-2); /* table 'name' */
+    debug_log("read value = %s", lua_tostring(L,-1));
+
 }
 
 /* call a function `f' defined in Lua */
@@ -227,7 +241,7 @@ static int l_sin (lua_State *L) {
 }
 
 void test_lua_call_sin(){
-    lua_State *L = lua_open();
+    lua_State *L = luaL_newstate();
     luaL_openlibs(L);
 
     /* push l_sin to top, stack == 1 */
@@ -261,6 +275,7 @@ int main (void)
     // test_table();
     // test_call_function();
     // test_common_call();
-    test_lua_call_sin();
+    test_create_table();
+    // test_lua_call_sin();
     return 0;
 }
