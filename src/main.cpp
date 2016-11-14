@@ -163,6 +163,16 @@ void test_table() {
     
 }
 
+#define TOLUA_REFID_PTR_MAPPING "ref_id_ptr"
+
+void test_create_table(){
+    lua_State *L = lua_open();
+    luaL_openlibs(L);
+    lua_pushstring(L, TOLUA_REFID_PTR_MAPPING);
+    lua_newtable(L);
+    lua_rawset(L,1);
+}
+
 /* call a function `f' defined in Lua */
 void test_call_function() {
     double x = 2;
@@ -228,9 +238,7 @@ void test_lua_call_sin(){
     lua_setglobal(L, "mysin");
     debug_log("top = %d",lua_gettop(L));
 
-
-    /* will be clear */
-    lua_pushstring(L,"test");
+    lua_pushstring(L,"sentinel");
     debug_log("test-> top = %d",lua_gettop(L));
 
     /*inovke mysin in a lua script*/
@@ -240,7 +248,8 @@ void test_lua_call_sin(){
     }
 
     /* lua auto clear func call stack */
-    debug_log("top = %d",lua_gettop(L));
+    debug_log("top value = %s",lua_tostring(L, -1));
+    lua_close(L);
 }
 
 int main (void)
