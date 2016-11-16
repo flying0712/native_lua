@@ -6,8 +6,8 @@
 #include <math.h>
 #include <ctime>
 #include <vector>
-
-
+#include "LuaCallback.hpp"
+#include <tolua++.h>
 
 void debug_log(const char *fmt, ...)
 {
@@ -266,8 +266,45 @@ void test_lua_call_sin(){
     lua_close(L);
 }
 
+void tolua_mooli_registerCallback(lua_State* tolua_S){
+
+}
+
+int lua_register_callback(lua_State* L)
+{
+    int argc = 0;
+    int hid = (int)tolua_tonumber(L, 1, 0);
+    int handler = LuaCallback::addLuaFunction(L, 2);
+    printf("%d\n", handler);
+    LuaCallback::get()->registerLuaHandler(hid, handler);
+
+    return 0;//无返回值
+}
+
+void test_register_lua_function(){
+    lua_State *L = luaL_newstate();
+    luaL_openlibs(L);
+    lua_getglobal(L, "_G");
+    tolua_open(L);
+    tolua_module(L,"mo",0);
+    tolua_beginmodule(L,"mo");
+        tolua_function(L,"registerCallback",lua_register_callback);
+    tolua_endmodule(L);
+
+    /*run script*/
+    const char* filename = "scripts/register_callback.lua";
+    if (luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0)){
+        Helper::handleError(L, "cannot run file: %s", lua_tostring(L, -1));
+    }
+    LuaCallback::get()->invoke(L,1001);
+    
+    lua_close(L);
+
+}
+
 int main (void)
 {
+    test_register_lua_function();
     // test_interact();
     // test_stack_api();
     // debug_log("Logging, %d %d %d", 1, 2, 3);
